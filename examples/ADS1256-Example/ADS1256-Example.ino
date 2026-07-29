@@ -1,10 +1,7 @@
 //This code belongs to the ADS1256 library developed by Curious Scientist
 //A very detailed documentation can be found at: https://curiousscientist.tech/ads1256-custom-library
-<<<<<<< HEAD
 //vietmos 123456789
-=======
 //vietmos
->>>>>>> 53e21a4615bee01056f674e82a3359b42095838b
 
 #include <ADS1256.h>
 
