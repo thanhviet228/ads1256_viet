@@ -1,36 +1,36 @@
-//This code belongs to the ADS1256 library developed by Curious Scientist
-//A very detailed documentation can be found at: https://curiousscientist.tech/ads1256-custom-library
-
+//Đoạn code này thuộc về thư viện ADS1256 được phát triển bởi Curious Scientist
+//Tài liệu chi tiết có thể xem tại: https://curiousscientist.tech/ads1256-custom-library
 
 // ================== GIẢI THÍCH CHUNG (dành cho người không rành lập trình) ==================
-// Day la file vi du (demo) cho thu vien ADS1256. ADS1256 la mot con chip chuyen
-// dung de do dien ap (analog) mot cach rat chinh xac, va no noi voi Arduino/vi
-// dieu khien qua chuan giao tiep SPI.
+// Đây là file ví dụ (demo) cho thư viện ADS1256. ADS1256 là một con chip chuyên
+// dùng để đo điện áp (analog) một cách rất chính xác, và nó nối với Arduino/vi
+// điều khiển qua chuẩn giao tiếp SPI.
 //
-// Cach hoat dong tong quat cua file nay:
-// 1) Trong ham setup() (chay 1 lan luc khoi dong): khoi tao chip ADS1256, dat mot vai
-//    cau hinh mac dinh (do khuech dai, kenh do, toc do lay mau).
-// 2) Trong ham loop() (chay lien tuc, lap di lap lai): cho nguoi dung go 1 ky tu
-//    lenh qua "Serial Monitor" (cua so giao tiep may tinh <-> Arduino), roi thuc
-//    hien hanh dong tuong ung (do 1 lan, do lien tuc, doi kenh, doi toc do...).
+// Cách hoạt động tổng quát của file này:
+// 1) Trong hàm setup() (chạy 1 lần lúc khởi động): khởi tạo chip ADS1256, đặt một vài
+//    cấu hình mặc định (độ khuếch đại, kênh đo, tốc độ lấy mẫu).
+// 2) Trong hàm loop() (chạy liên tục, lặp đi lặp lại): cho người dùng gõ 1 ký tự
+//    lệnh qua "Serial Monitor" (cửa sổ giao tiếp máy tính <-> Arduino), rồi thực
+//    hiện hành động tương ứng (đo 1 lần, đo liên tục, đổi kênh, đổi tốc độ...).
 //
-// Ban khong can hieu sau ve SPI hay thanh ghi de dung file nay - chi can mo
-// Serial Monitor, dat toc do 115200 baud, va go cac ky tu lenh duoc liet ke
-// trong tung "case" ben duoi (vd: go 'T' de kiem tra ket noi, go 'a' de do 1 lan,
-// go 'I' de kiem tra + in giai thich trang thai TAT CA cac thanh ghi hien tai).
+// Bạn không cần hiểu sâu về SPI hay thanh ghi để dùng file này - chỉ cần mở
+// Serial Monitor, đặt tốc độ 115200 baud, và gõ các ký tự lệnh được liệt kê
+// trong từng "case" bên dưới (vd: gõ 'T' để kiểm tra kết nối, gõ 'a' để đo 1 lần,
+// gõ 'I' để kiểm tra + in giải thích trạng thái TẤT CẢ các thanh ghi hiện tại).
 // ===============================================================================================
 
 #include <ADS1256.h>
 
-//#define ADS1256_SPI_ALREADY_STARTED  //prevent internal _spi->begin() to allow custom SPI initialization
+//#define ADS1256_SPI_ALREADY_STARTED  
+//Ngăn chặn việc gọi _spi->begin() bên trong để cho phép khởi tạo SPI tùy chỉnh.
 
-//Platform-specific pin definitions
-//Doan duoi day tu dong nhan dien loai vi dieu khien (RP2040, STM32, Teensy, ESP32...)
-//va gan san cac chan SPI phu hop cho tung loai. Ban khong can sua doan nay,
-//tru khi ban muon doi sang dung 1 bus SPI khac (vd SPI1, SPI2, HSPI...).
+//Các định nghĩa chân cắm dành riêng cho nền tảng
+//Đoạn dưới đây tự động nhận diện loại vi điều khiển (RP2040, STM32, Teensy, ESP32...)
+//và gán sẵn các chân SPI phù hợp cho từng loại. Bạn không cần sửa đoạn này,
+//trừ khi bạn muốn đổi sang dùng 1 bus SPI khác (vd SPI1, SPI2, HSPI...).
 #if defined(ARDUINO_ARCH_RP2040)
 #pragma message "Using RP2040"
-//#define USE_SPI1 //Alternative USE_SPI for RP2040 - Uncomment to use SPI1
+//#define USE_SPI1 //Tùy chọn USE_SPI cho RP2040 - Bỏ chú thích để sử dụng SPI1
 #if defined(USE_SPI1)
 #pragma message "Using SPI1 (SPI1)"
 #define SPI_MOSI 11
@@ -55,13 +55,13 @@
 SPIClass spi2(PB15, PB14, PB13);  //MOSI, MISO, SCK
 #else
 #pragma message "Using SPI (SPI1)"
-#define USE_SPI SPI  //Default SPI1, pre-instantiated as 'SPI' on PA7, PA6, PA5
+#define USE_SPI SPI  //SPI1 mặc định, được khởi tạo sẵn dưới tên 'SPI' trên các chân PA7, PA6, PA5.
 #endif
                                   //-----------------------------------------
 #elif defined(TEENSYDUINO)
 #pragma message "Using Teensy"
-//#define USE_SPI1 //Uncomment to use SPI1 on Teensy 4.0 or 4.1
-//#define USE_SPI2 //Uncomment to use SPI2 on Teensy 4.0 or 4.1
+//#define USE_SPI1 //Bỏ chú thích để sử dụng SPI1 trên Teensy 4.0 hoặc 4.1
+//#define USE_SPI2 //Bỏ chú thích để sử dụng SPI2 trên Teensy 4.0 hoặc 4.1
 #if defined(USE_SPI2)
 #pragma message "Using SPI2 (SPI3)"
 #define USE_SPI SPI2
@@ -77,7 +77,7 @@ SPIClass spi2(PB15, PB14, PB13);  //MOSI, MISO, SCK
 #elif defined(ARDUINO_ARCH_ESP32)
 #pragma message "Using ESP32"
 SPIClass hspi(HSPI);
-//#define USE_HSPI  // Uncomment to use HSPI instead of VSPI
+//#define USE_HSPI  // Bỏ chú thích để sử dụng HSPI thay vì VSPI.
 #if defined(USE_HSPI)
 #pragma message "Using HSPI"
 #define USE_SPI hspi
@@ -86,7 +86,7 @@ SPIClass hspi(HSPI);
 #define USE_SPI SPI
 #endif
 //-----------------------------------------
-#else  //Default fallback (Arduino AVR)
+#else  //Mặc định dự phòng (Arduino AVR)
 #define SPI_MOSI MOSI
 #define SPI_MISO MISO
 #define SPI_SCK SCK
@@ -95,30 +95,28 @@ SPIClass hspi(HSPI);
 #endif
 
 
-//Below a few examples of pin descriptions for different microcontrollers I used:
-//QUAN TRONG: chi duoc BO COMMENT (bo dau // o dau dong) DUY NHAT 1 dong ADS1256 A(...)
-//ben duoi, tuong ung voi loai board ban dang dung, va comment lai (them // vao) cac dong con lai.
-//Thu tu tham so la: DRDY, RESET, SYNC(PDWN), CS, VREF (dien ap tham chieu, dang so thuc).
-//ADS1256 A(2, ADS1256::PIN_UNUSED, 8, 10, 2.500, &USE_SPI); //DRDY, RESET, SYNC(PDWN), CS, VREF(float).    //Arduino Nano/Uno - OK
-//ADS1256 A(7, ADS1256::PIN_UNUSED, 10, 9, 2.500, &USE_SPI); //DRDY, RESET, SYNC(PDWN), CS, VREF(float).      //ATmega32U4 -OK
-//ADS1256 A(16, 17, ADS1256::PIN_UNUSED, 15, 2.500, &USE_SPI); //DRDY, RESET, SYNC(PDWN), CS, VREF(float).   //ESP32 WROOM 32 - OK (HSPI+VSPI)
-//ADS1256 A(7, ADS1256::PIN_UNUSED, 8, 10, 2.500, &USE_SPI); //DRDY, RESET, SYNC(PDWN), CS, VREF(float).    //Teensy 4.0 - OK
-//ADS1256 A(7, ADS1256::PIN_UNUSED, 6, 5, 2.500, &USE_SPI); //DRDY, RESET, SYNC(PDWN), CS, VREF(float).    //RP2040 Waveshare Mini - OK - dòng này liên tục gây lỗi, cần xem lại
-ADS1256 A(18, 20, 21, 19, 2.499523, &USE_SPI); //DRDY, RESET, SYNC(PDWN), CS, VREF(float), SPI bus.  //RP2040 Zero - OK
-//ADS1256 A(15, ADS1256::PIN_UNUSED, 14, 17, 2.500, &USE_SPI);  //DRDY, RESET, SYNC(PDWN), CS, VREF(float), SPI bus.  //RP2040 Pico W - OK
-//ADS1256 A(PA2, ADS1256::PIN_UNUSED, ADS1256::PIN_UNUSED, PA4, 2.500, &USE_SPI); //DRDY, RESET, SYNC(PDWN), CS, VREF(float). //STM32 "blue pill" - SPI1 - OK
-//ADS1256 A(PB10, PB11, ADS1256::PIN_UNUSED, PB12, 2.500, &USE_SPI);  // DRDY, RESET, SYNC, CS, VREF, SPI //STM32 "blue pill" - SPI2 - OK
+//Dưới đây là một vài ví dụ về mô tả chân cho các vi điều khiển khác nhau mà tôi đã sử dụng:
+//Thứ tự tham số là: DRDY, RESET, SYNC(PDWN), CS, VREF (điện áp tham chiếu, dạng số thực).
+//ADS1256 A(2, ADS1256::PIN_UNUSED, 8, 10, 2.500, &USE_SPI);          //Arduino Nano/Uno - OK
+//ADS1256 A(7, ADS1256::PIN_UNUSED, 10, 9, 2.500, &USE_SPI);          //ATmega32U4 -OK
+//ADS1256 A(16, 17, ADS1256::PIN_UNUSED, 15, 2.500, &USE_SPI);        //ESP32 WROOM 32 - OK (HSPI+VSPI)
+//ADS1256 A(7, ADS1256::PIN_UNUSED, 8, 10, 2.500, &USE_SPI);          //Teensy 4.0 - OK
+//ADS1256 A(7, ADS1256::PIN_UNUSED, 6, 5, 2.500, &USE_SPI);           //RP2040 Waveshare Mini - OK - dòng này liên tục gây lỗi, cần xem lại
+ADS1256 A(18, 20, 21, 19, 2.499523, &USE_SPI);                        // SPI bus.  //RP2040 Zero - OK
+//ADS1256 A(15, ADS1256::PIN_UNUSED, 14, 17, 2.500, &USE_SPI);        // SPI bus.  RP2040 Pico W - OK
+//ADS1256 A(PA2, ADS1256::PIN_UNUSED, ADS1256::PIN_UNUSED, PA4, 2.500, &USE_SPI); ///STM32 "blue pill" - SPI1 - OK
+//ADS1256 A(PB10, PB11, ADS1256::PIN_UNUSED, PB12, 2.500, &USE_SPI);  //STM32 "blue pill" - SPI2 - OK
 
-long rawConversion = 0;  //24-bit raw value - Ket qua do "tho" (dang so nguyen), chua doi ra Volt
-float voltageValue = 0;  //human-readable floating point value - Ket qua do da doi ra Volt, de doc
+long rawConversion = 0;  //24-bit raw value - Kết quả đo "thô" (dạng số nguyên)
+float voltageValue = 0;  //Kết quả đo đã đổi ra Volt, dễ đọc
 
-int singleEndedChannels[8] = { SING_0, SING_1, SING_2, SING_3, SING_4, SING_5, SING_6, SING_7 };  //Array to store the single-ended channels
-int differentialChannels[4] = { DIFF_0_1, DIFF_2_3, DIFF_4_5, DIFF_6_7 };                         //Array to store the differential channels
-int inputChannel = 0;                                                                             //Number used to pick the channel from the above two arrays
-char inputMode = ' ';                                                                             //can be 's' and 'd': single-ended and differential
+int singleEndedChannels[8] = { SING_0, SING_1, SING_2, SING_3, SING_4, SING_5, SING_6, SING_7 };  //Mảng lưu trữ các kênh đơn đầu - single-ended 
+int differentialChannels[4] = { DIFF_0_1, DIFF_2_3, DIFF_4_5, DIFF_6_7 };                         //Mảng lưu trữ các kênh vi sai - differential 
+int inputChannel = 0;                                                                             //Số được sử dụng để chọn kênh từ hai mảng nêu trên.
+char inputMode = ' ';                                                             //có thể là 's' và 'd': đơn đầu (single-ended) và vi sai (differential)
 
-int pgaValues[7] = { PGA_1, PGA_2, PGA_4, PGA_8, PGA_16, PGA_32, PGA_64 };  //Array to store the PGA settings
-int pgaSelection = 0;                                                       //Number used to pick the PGA value from the above array
+int pgaValues[7] = { PGA_1, PGA_2, PGA_4, PGA_8, PGA_16, PGA_32, PGA_64 };  //Mảng lưu trữ các thiết lập PGA
+int pgaSelection = 0;               //Giá trị số được sử dụng để chọn giá trị PGA từ mảng nêu trên.
 
 int drateValues[16] = {
   DRATE_30000SPS,
@@ -137,12 +135,13 @@ int drateValues[16] = {
   DRATE_10SPS,
   DRATE_5SPS,
   DRATE_2SPS
-};  //Array to store the sampling rates
+};  //Mảng lưu trữ các tốc độ lấy mẫu
 
-int drateSelection = 0;  //Number used to pick the sampling rate from the above array
+int drateSelection = 0;  //Số được sử dụng để chọn tốc độ lấy mẫu từ mảng nêu trên.
 
-//Ten hien thi (dang chu, de doc) tuong ung 1-1 voi tung gia tri trong mang drateValues[] o tren.
-//Dung de "tra nguoc": tu 1 gia tri byte doc duoc trong thanh ghi DRATE, tim ra ten toc do de in cho de hieu.
+//Tên hiển thị (dạng chữ, dễ đọc) tương ứng 1-1 với từng giá trị trong mảng drateValues[] ở trên.
+//Dùng để "tra ngược": từ 1 giá trị byte đọc được trong thanh ghi DRATE, 
+//tìm ra tên tốc độ để in cho dễ hiểu.
 const char* drateNames[16] = {
   "30000 SPS", "15000 SPS", "7500 SPS", "3750 SPS", "2000 SPS", "1000 SPS",
   "500 SPS", "100 SPS", "60 SPS", "50 SPS", "30 SPS", "25 SPS",
@@ -161,76 +160,75 @@ String registers[11] = {
   "FSC0",
   "FSC1",
   "FSC2"
-};  //Array to store the registers
+};  //Mảng để lưu trữ các thanh ghi
+int registerToRead = 0;        //Số hiệu thanh ghi cần đọc
+int registerToWrite = 0;       //Số hiệu thanh ghi cần ghi
+int registerValueToWrite = 0;  //Giá trị cần ghi vào thanh ghi đã chọn
 
-int registerToRead = 0;        //Register number to be read
-int registerToWrite = 0;       //Register number to be written
-int registerValueToWrite = 0;  //Value to be written in the selected register
-
-//SUA LOI (#2): ham tro giup nay thay cho kieu "while (!Serial.available());" cu.
-//Truoc day, neu nguoi dung go 1 lenh (vd: 'M') nhung khong go tiep phan con lai,
-//chuong trinh se bi "treo" vinh vien tai do vi cho du lieu mai khong den.
-//Ham nay chi cho toi da "timeoutMs" mili-giay; neu het thoi gian van khong co
-//du lieu moi, no in ra thong bao loi va tra ve false de lenh hien tai bi huy bo,
-//chuong trinh quay lai vong loop() binh thuong thay vi bi treo.
+//SỬA LỖI (#2): hàm trợ giúp này thay cho kiểu "while (!Serial.available());" cũ.
+//Trước đây, nếu người dùng gõ 1 lệnh (vd: 'M') nhưng không gõ tiếp phần còn lại,
+//chương trình sẽ bị "treo" vĩnh viễn tại đó vì chờ dữ liệu mãi không đến.
+//Hàm này chỉ cho tối đa "timeoutMs" mili-giây; nếu hết thời gian vẫn không có
+//dữ liệu mới, nó in ra thông báo lỗi và trả về false để lệnh hiện tại bị hủy bỏ,
+//chương trình quay lại vòng loop() bình thường thay vì bị treo.
 bool waitForSerialInput(unsigned long timeoutMs = 3000) {
   unsigned long startTime = millis();
   while (!Serial.available()) {
     if (millis() - startTime > timeoutMs) {
-      Serial.println("Loi: Het thoi gian cho du lieu tu Serial. Lenh bi huy.");
+      Serial.println("Lỗi: Hết thời gian chờ dữ liệu từ Serial. Lệnh bị hủy.");
       return false;
     }
   }
   return true;
 }
 
-//In 1 byte duoi dang nhi phan, luon du 8 chu so (co so 0 dung truoc neu can)
-//Vi du: gia tri 3 (0b00000011) se duoc in ra la "00000011" thay vi chi "11"
+//In 1 byte dưới dạng nhị phân, luôn đủ 8 chữ số (có số 0 đứng trước nếu cần)
+//Ví dụ: giá trị 3 (0b00000011) sẽ được in ra là "00000011" thay vì chỉ "11"
 void printBinary8(byte value) {
   for (int8_t b = 7; b >= 0; b--) {
     Serial.print(bitRead(value, b));
   }
 }
 
-//Doi 1 gia tri "nibble" (4 bit, 0-15) trong thanh ghi MUX thanh ten kenh de nguoi dung de doc
-//Theo datasheet: 0-7 la AIN0-AIN7, 8 la AINCOM (chan mass noi bo dung cho che do don)
+//Đổi 1 giá trị "nibble" (4 bit, 0-15) trong thanh ghi MUX thành tên kênh để người dùng dễ đọc
+//Theo datasheet: 0-7 là AIN0-AIN7, 8 là AINCOM (chân mass nội bộ dùng cho chế độ đơn)
 String muxChannelName(uint8_t nibble) {
   if (nibble <= 7) {
     return "AIN" + String(nibble);
   } else if (nibble == 8) {
     return "AINCOM";
   } else {
-    return "khong xac dinh";
+    return "không xác định";
   }
 }
 
 //====================================================================================================
-//HAM KIEM TRA TRANG THAI CAC THANH GHI: doc toan bo 11 thanh ghi cua ADS1256, in len Serial Monitor
-//va giai thich y nghia tung phan (giong nhu "dashboard" trang thai cua chip).
-//Goi ham nay bang cach go ky tu 'I' (Inspect) trong Serial Monitor.
-//Muc dich: giup nguoi dung nhanh chong biet chip dang duoc cau hinh nhu the nao (kenh dang do,
-//he so khuech dai, toc do lay mau, cac gia tri hieu chuan...) ma khong can tra tay tung thanh ghi.
+//HÀM KIỂM TRA TRẠNG THÁI CÁC THANH GHI: đọc toàn bộ 11 thanh ghi của ADS1256, in lên Serial Monitor
+//và giải thích ý nghĩa từng phần (giống như "dashboard" trạng thái của chip).
+//Gọi hàm này bằng cách gõ ký tự 'I' (Inspect) trong Serial Monitor.
+//Mục đích: giúp người dùng nhanh chóng biết chip đang được cấu hình như thế nào (kênh đang đo,
+//hệ số khuếch đại, tốc độ lấy mẫu, các giá trị hiệu chuẩn...) mà không cần tra tay từng thanh ghi.
 //====================================================================================================
 void printAllRegistersStatus() {
   Serial.println();
-  Serial.println(F("================ TRANG THAI CAC THANH GHI ADS1256 ================"));
+  Serial.println(F("================ TRẠNG THÁI CÁC THANH GHI ADS1256 ================"));
 
-  //Doc tat ca 11 thanh ghi (dia chi 0 den 10) ve truoc, luu vao mang de xu ly ben duoi
+  //Đọc tất cả 11 thanh ghi (địa chỉ 0 đến 10) về trước, lưu vào mảng để xử lý bên dưới
   byte regValues[11];
   for (int i = 0; i <= 10; i++) {
     regValues[i] = (byte)A.readRegister(i);
     delay(20);
   }
 
-  //Bang tong quan: ten thanh ghi - thap phan - hex - nhi phan
-  Serial.println(F("Dia chi | Ten     | DEC | HEX  | Nhi phan"));
+  //Bảng tổng quan: tên thanh ghi - thập phân - hex - nhị phân
+  Serial.println(F("Địa chỉ | Tên     | DEC | HEX  | Nhị phân"));
   for (int i = 0; i <= 10; i++) {
     Serial.print(F("  "));
     Serial.print(i);
     Serial.print(F("     | "));
     Serial.print(registers[i]);
     for (unsigned int p = registers[i].length(); p < 8; p++) {
-      Serial.print(' ');  //can le cho cac ten thanh ghi ngan hon
+      Serial.print(' ');  //căn lề cho các tên thanh ghi ngắn hơn
     }
     Serial.print(F("| "));
     Serial.print(regValues[i]);
@@ -244,35 +242,35 @@ void printAllRegistersStatus() {
 
   //---------------- STATUS (0x00) ----------------
   Serial.println();
-  Serial.println(F("--- STATUS (thanh ghi trang thai chung) ---"));
+  Serial.println(F("--- STATUS (thanh ghi trạng thái chung) ---"));
   byte statusValue = regValues[0];
-  Serial.print(F("  ID chip (bit 7-4, chi doc): "));
+  Serial.print(F("  ID chip (bit 7-4, chỉ đọc): "));
   Serial.println((statusValue >> 4) & 0x0F);
-  Serial.print(F("  Thu tu bit ORDER (bit 3): "));
-  Serial.println(bitRead(statusValue, 3) == 0 ? F("MSB truoc (mac dinh)") : F("LSB truoc"));
-  Serial.print(F("  Tu dong hieu chuan ACAL (bit 2): "));
-  Serial.println(bitRead(statusValue, 2) == 1 ? F("DANG BAT") : F("DANG TAT"));
-  Serial.print(F("  Bo dem dau vao BUFEN (bit 1): "));
-  Serial.println(bitRead(statusValue, 1) == 1 ? F("DANG BAT (khuyen nghi)") : F("DANG TAT"));
-  Serial.print(F("  DRDY (bit 0, chi doc): "));
-  Serial.println(bitRead(statusValue, 0) == 0 ? F("San sang du lieu moi") : F("Chua san sang / dang chuyen doi"));
+  Serial.print(F("  Thứ tự bit ORDER (bit 3): "));
+  Serial.println(bitRead(statusValue, 3) == 0 ? F("MSB trước (mặc định)") : F("LSB trước"));
+  Serial.print(F("  Tự động hiệu chuẩn ACAL (bit 2): "));
+  Serial.println(bitRead(statusValue, 2) == 1 ? F("ĐANG BẬT") : F("ĐANG TẮT"));
+  Serial.print(F("  Bộ đệm đầu vào BUFEN (bit 1): "));
+  Serial.println(bitRead(statusValue, 1) == 1 ? F("ĐANG BẬT (khuyến nghị)") : F("ĐANG TẮT"));
+  Serial.print(F("  DRDY (bit 0, chỉ đọc): "));
+  Serial.println(bitRead(statusValue, 0) == 0 ? F("Sẵn sàng dữ liệu mới") : F("Chưa sẵn sàng / đang chuyển đổi"));
 
   //---------------- MUX (0x01) ----------------
   Serial.println();
-  Serial.println(F("--- MUX (kenh dau vao dang chon) ---"));
+  Serial.println(F("--- MUX (kênh đầu vào đang chọn) ---"));
   byte muxValue = regValues[1];
   uint8_t pSel = (muxValue >> 4) & 0x0F;
   uint8_t nSel = muxValue & 0x0F;
-  Serial.print(F("  Kenh duong PSEL (bit 7-4): "));
+  Serial.print(F("  Kênh dương PSEL (bit 7-4): "));
   Serial.println(muxChannelName(pSel));
-  Serial.print(F("  Kenh am  NSEL (bit 3-0): "));
+  Serial.print(F("  Kênh âm  NSEL (bit 3-0): "));
   Serial.println(muxChannelName(nSel));
   if (nSel == 8) {
-    Serial.print(F("  => Dang do CHE DO DON (single-ended): "));
+    Serial.print(F("  => Đang đo CHẾ ĐỘ ĐƠN (single-ended): "));
     Serial.print(muxChannelName(pSel));
-    Serial.println(F(" so voi AINCOM (mass)"));
+    Serial.println(F(" so với AINCOM (mass)"));
   } else {
-    Serial.print(F("  => Dang do CHE DO VI SAI (differential): "));
+    Serial.print(F("  => Đang đo CHẾ ĐỘ VI SAI (differential): "));
     Serial.print(muxChannelName(pSel));
     Serial.print(F(" - "));
     Serial.println(muxChannelName(nSel));
@@ -280,7 +278,7 @@ void printAllRegistersStatus() {
 
   //---------------- ADCON (0x02) ----------------
   Serial.println();
-  Serial.println(F("--- ADCON (khuech dai & clock) ---"));
+  Serial.println(F("--- ADCON (khuếch đại & clock) ---"));
   byte adconValue = regValues[2];
   uint8_t clkBits = (adconValue >> 5) & 0x03;
   uint8_t sdcsBits = (adconValue >> 3) & 0x03;
@@ -288,103 +286,103 @@ void printAllRegistersStatus() {
   Serial.print(F("  CLKOUT (bit 6-5): "));
   Serial.println(clkBits);
   Serial.print(F("  SDCS - Sensor Detect Current (bit 4-3): "));
-  Serial.println(sdcsBits == 0 ? F("TAT (mac dinh)") : F("DANG BAT"));
-  Serial.print(F("  PGA - He so khuech dai (bit 2-0): x"));
+  Serial.println(sdcsBits == 0 ? F("TẮT (mặc định)") : F("ĐANG BẬT"));
+  Serial.print(F("  PGA - Hệ số khuếch đại (bit 2-0): x"));
   Serial.println((int)pow(2, pgaBits));
-  Serial.print(F("  => Dai dien ap dau vao toi da khoang +/- "));
+  Serial.print(F("  => Dải điện áp đầu vào tối đa khoảng +/- "));
   Serial.print(5.0 / pow(2, pgaBits), 4);
-  Serial.println(F(" V (uoc tinh voi VREF chuan = 2.5V)"));
+  Serial.println(F(" V (ước tính với VREF chuẩn = 2.5V)"));
 
   //---------------- DRATE (0x03) ----------------
   Serial.println();
-  Serial.println(F("--- DRATE (toc do lay mau) ---"));
+  Serial.println(F("--- DRATE (tốc độ lấy mẫu) ---"));
   byte drateValue = regValues[3];
   bool drateFound = false;
   for (int i = 0; i < 16; i++) {
     if (drateValues[i] == drateValue) {
-      Serial.print(F("  => Toc do lay mau hien tai: "));
+      Serial.print(F("  => Tốc độ lấy mẫu hiện tại: "));
       Serial.println(drateNames[i]);
       drateFound = true;
       break;
     }
   }
   if (!drateFound) {
-    Serial.println(F("  => Gia tri khong khop voi bang toc do chuan (co the la gia tri tuy chinh)"));
+    Serial.println(F("  => Giá trị không khớp với bảng tốc độ chuẩn (có thể là giá trị tùy chỉnh)"));
   }
 
   //---------------- IO (0x04) ----------------
   Serial.println();
-  Serial.println(F("--- IO (4 chan GPIO phu D0-D3) ---"));
+  Serial.println(F("--- IO (4 chân GPIO phụ D0-D3) ---"));
   byte ioValue = regValues[4];
   for (int pinNumber = 3; pinNumber >= 0; pinNumber--) {
     Serial.print(F("  D"));
     Serial.print(pinNumber);
-    Serial.print(F(": chieu = "));
+    Serial.print(F(": chiều = "));
     Serial.print(bitRead(ioValue, pinNumber + 4) == 1 ? F("INPUT ") : F("OUTPUT"));
-    Serial.print(F(", gia tri hien tai = "));
+    Serial.print(F(", giá trị hiện tại = "));
     Serial.println(bitRead(ioValue, pinNumber));
   }
 
-  //---------------- OFC0/OFC1/OFC2 (0x05-0x07) - Hieu chuan Offset ----------------
+  //---------------- OFC0/OFC1/OFC2 (0x05-0x07) - Hiệu chuẩn Offset ----------------
   Serial.println();
-  Serial.println(F("--- OFC0/OFC1/OFC2 (he so hieu chuan OFFSET, 24-bit, co dau) ---"));
+  Serial.println(F("--- OFC0/OFC1/OFC2 (hệ số hiệu chuẩn OFFSET, 24-bit, có dấu) ---"));
   long ofcRaw = ((long)regValues[7] << 16) | ((long)regValues[6] << 8) | regValues[5];
-  if (ofcRaw & 0x800000) {  //Neu bit dau (bit 23) la 1 -> day la so am dang bu 2
+  if (ofcRaw & 0x800000) {  //Nếu bit dấu (bit 23) là 1 -> đây là số âm dạng bù 2
     ofcRaw -= 0x1000000;
   }
-  Serial.print(F("  Gia tri Offset Calibration (thap phan, co dau): "));
+  Serial.print(F("  Giá trị Offset Calibration (thập phân, có dấu): "));
   Serial.println(ofcRaw);
 
-  //---------------- FSC0/FSC1/FSC2 (0x08-0x0A) - Hieu chuan Full-Scale ----------------
+  //---------------- FSC0/FSC1/FSC2 (0x08-0x0A) - Hiệu chuẩn Full-Scale ----------------
   Serial.println();
-  Serial.println(F("--- FSC0/FSC1/FSC2 (he so hieu chuan FULL-SCALE, 24-bit, khong dau) ---"));
+  Serial.println(F("--- FSC0/FSC1/FSC2 (hệ số hiệu chuẩn FULL-SCALE, 24-bit, không dấu) ---"));
   unsigned long fscRaw = ((unsigned long)regValues[10] << 16) | ((unsigned long)regValues[9] << 8) | regValues[8];
-  Serial.print(F("  Gia tri Full-Scale Calibration (thap phan): "));
+  Serial.print(F("  Giá trị Full-Scale Calibration (thập phân): "));
   Serial.println(fscRaw);
-  Serial.println(F("  (Gia tri nay do chip tu tinh khi chay SELFCAL/SYSGCAL, khong can chinh tay)"));
+  Serial.println(F("  (Giá trị này do chip tự tính khi chạy SELFCAL/SYSGCAL, không cần chỉnh tay)"));
 
   Serial.println(F("====================================================================="));
   Serial.println();
 }
 
 void setup() {
-  Serial.begin(115200);  //The value does not matter if you use an MCU with native USB
+  Serial.begin(115200);  //Giá trị này không quan trọng nếu bạn dùng vi điều khiển có USB gốc (native USB)
 
   while (!Serial) {
-    ;  //Wait until the serial becomes available
+    ;  //Chờ cho đến khi cổng serial sẵn sàng
   }
 
   Serial.println("ADS1256 - Custom Library Demo File by Curious Scientist - 2025-05-28");
 
-#if defined(ARDUINO_ARCH_RP2040)  //If RP2040 is used, we need to pass the SPI pins
+#if defined(ARDUINO_ARCH_RP2040)  //Nếu dùng RP2040, cần khai báo các chân SPI
   SPI.setSCK(SPI_SCK);
   SPI.setTX(SPI_MOSI);
   SPI.setRX(SPI_MISO);
 #endif
 
-#if defined(USE_HSPI)      //If ESP32 is used, we need to start SPI with a non-strapping MISO pin
-  hspi.begin(14, 25, 13);  //SCK, MISO (safe), MOSI
+#if defined(USE_HSPI)      //Nếu dùng ESP32, cần khởi động SPI với chân MISO không phải chân "strapping"
+  hspi.begin(14, 25, 13);  //SCK, MISO (an toàn), MOSI
 #endif
 
-  A.InitializeADC();  //See the documentation for every details
-  //Setting up CS, RESET, SYNC and SPI
-  //Assigning default values to: STATUS, MUX, ADCON, DRATE
-  //Performing a SYSCAL
+  A.InitializeADC();  //Xem tài liệu để biết chi tiết đầy đủ
+  //Thiết lập CS, RESET, SYNC và SPI
+  //Gán các giá trị mặc định cho: STATUS, MUX, ADCON, DRATE
+  //Thực hiện lệnh SYSCAL
 
-  //Below is a demonstration to change the values through the built-on functions of the library
-  //Set a PGA value
+  //Dưới đây là ví dụ minh họa cách thay đổi các giá trị thông qua các hàm có sẵn của thư viện
+  //Đặt giá trị PGA
   A.setPGA(PGA_1);  //0b00000000 - DEC: 0
   //--------------------------------------------
 
-  //Set input channels
+  //Đặt kênh đầu vào
   A.setMUX(DIFF_6_7);  //0b01100111 - DEC: 103
   //--------------------------------------------
 
-  //Set DRATE
+  //Đặt DRATE
   A.setDRATE(DRATE_5SPS);  //0b00010011 - DEC: 19
   //--------------------------------------------
 
-  //Read back the above 3 values to check if the writing was succesful
+  //Đọc lại 3 giá trị trên để kiểm tra việc ghi có thành công hay không
   Serial.print("PGA: ");
   Serial.println(A.getPGA());
   delay(100);
@@ -397,7 +395,7 @@ void setup() {
   Serial.println(A.readRegister(DRATE_REG));
   delay(100);
 
-  //Freeze the display for 3 sec
+  //Tạm dừng hiển thị trong 3 giây
   delay(3000);
 }
 
@@ -413,93 +411,93 @@ void loop() {
       All the above things are done through the serial port, the use only has to send certain commands
   */
 
-  // ------ GIAI THICH: ------
-  // Cu moi vong lap, chuong trinh kiem tra xem co ky tu nao duoc go vao Serial
-  // Monitor hay khong. Neu co, no doc ky tu do va dua vao khoi switch-case ben
-  // duoi de quyet dinh phai lam gi (do 1 lan, do lien tuc, doi kenh...).
+  // ------ GIẢI THÍCH: ------
+  // Cứ mỗi vòng lặp, chương trình kiểm tra xem có ký tự nào được gõ vào Serial
+  // Monitor hay không. Nếu có, nó đọc ký tự đó và đưa vào khối switch-case bên
+  // dưới để quyết định phải làm gì (đo 1 lần, đo liên tục, đổi kênh...).
 
   if (Serial.available() > 0) {
-    char commandCharacter = Serial.read();  //we use characters (letters) for controlling the switch-case
+    char commandCharacter = Serial.read();  //ta dùng các ký tự (chữ cái) để điều khiển khối switch-case
 
-    switch (commandCharacter)  //based on the command character, we decide what to do
+    switch (commandCharacter)  //dựa vào ký tự lệnh, ta quyết định phải làm gì
     {
-      case 's':  //SDATAC - Stop Reading Data Continously
+      case 's':  //SDATAC - Dừng đọc dữ liệu liên tục
         A.stopConversion();
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'L':  //Perform a self calibration
+      case 'L':  //Thực hiện tự hiệu chuẩn (self calibration)
         A.sendDirectCommand(SELFCAL);
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'G':                       //Read a single input continuously
-        while (Serial.read() != 's')  //The conversion is stopped by a character received from the serial port
+      case 'G':                       //Đọc liên tục 1 đầu vào
+        while (Serial.read() != 's')  //Phép chuyển đổi bị dừng bởi 1 ký tự nhận được từ cổng serial
         {
           Serial.println(A.convertToVoltage(A.readSingleContinuous()), 8);
-          //The conversion is printed in Volts with 6 decimal digits
-          //Note: Certain serial terminals cannot keep up with high speed datastream!
+          //Kết quả chuyển đổi được in ra dưới dạng Volt với 6 chữ số thập phân
+          //Lưu ý: Một số phần mềm terminal serial không theo kịp luồng dữ liệu tốc độ cao!
         }
         A.stopConversion();
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'C':                       //Cycle single ended inputs (A0+GND, A1+GND ... A7+GND)
-        while (Serial.read() != 's')  //The conversion is stopped by a character received from the serial port
+      case 'C':                       //Quét lần lượt các đầu vào đơn (A0+GND, A1+GND ... A7+GND)
+        while (Serial.read() != 's')  //Phép chuyển đổi bị dừng bởi 1 ký tự nhận được từ cổng serial
         {
-          float channels[8];  //Buffer that holds 8 conversions (8 single-ended channels)
+          float channels[8];  //Bộ đệm lưu 8 kết quả chuyển đổi (8 kênh đơn - single-ended)
           for (int j = 0; j < 8; j++) {
-            channels[j] = A.convertToVoltage(A.cycleSingle());  //store the converted single-ended results in the buffer
+            channels[j] = A.convertToVoltage(A.cycleSingle());  //lưu các kết quả đơn đã chuyển đổi vào bộ đệm
           }
           for (int i = 0; i < 8; i++) {
-            Serial.print(channels[i], 8);  //print the converted single-ended results with 4 digits
+            Serial.print(channels[i], 8);  //in các kết quả đơn đã chuyển đổi với 4 chữ số
 
-            if (i < 7)  //Only printing tab between the first 7 conversions
+            if (i < 7)  //Chỉ in tab giữa 7 kết quả đầu tiên
             {
-              Serial.print("\t");  //tab separator to separate the 8 conversions shown in the same line
+              Serial.print("\t");  //ký tự tab phân cách 8 kết quả hiển thị trên cùng 1 dòng
             }
           }
-          Serial.println();  //Printing a linebreak - this will put the next 8 conversions in a new line
+          Serial.println();  //In xuống dòng - để 8 kết quả tiếp theo nằm ở dòng mới
         }
         A.stopConversion();
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'D':                       //Cycle differential inputs (A0+A1, A2+A3, A4+A5, A6+A7)
-        while (Serial.read() != 's')  //The conversion is stopped by a character received from the serial port
+      case 'D':                       //Quét lần lượt các đầu vào vi sai (A0+A1, A2+A3, A4+A5, A6+A7)
+        while (Serial.read() != 's')  //Phép chuyển đổi bị dừng bởi 1 ký tự nhận được từ cổng serial
         {
-          float channels[4];  //Buffer that holds 4 conversions (4 differential channels)
+          float channels[4];  //Bộ đệm lưu 4 kết quả chuyển đổi (4 kênh vi sai - differential)
           for (int j = 0; j < 4; j++) {
-            channels[j] = A.convertToVoltage(A.cycleDifferential());  //store the converted differential results in the buffer
+            channels[j] = A.convertToVoltage(A.cycleDifferential());  //lưu các kết quả vi sai đã chuyển đổi vào bộ đệm
           }
 
-          //After the 4 conversions are in the buffer, the contents are printed on the serial terminal
+          //Sau khi 4 kết quả đã nằm trong bộ đệm, nội dung được in ra terminal serial
           for (int i = 0; i < 4; i++) {
-            Serial.print(channels[i], 8);  //print the converted differential results from the buffer
+            Serial.print(channels[i], 8);  //in các kết quả vi sai đã chuyển đổi từ bộ đệm
 
-            if (i < 3)  //Only printing tab between the first 3 conversions
+            if (i < 3)  //Chỉ in tab giữa 3 kết quả đầu tiên
             {
-              Serial.print("\t");  //tab separator to separate the 4 conversions shown in the same line
+              Serial.print("\t");  //ký tự tab phân cách 4 kết quả hiển thị trên cùng 1 dòng
             }
           }
-          Serial.println();  //Printing a linebreak - this will put the next 4 conversions in a new line
+          Serial.println();  //In xuống dòng - để 4 kết quả tiếp theo nằm ở dòng mới
         }
         A.stopConversion();
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'B':  //Speed test
+      case 'B':  //Kiểm tra tốc độ
         {
-          //Variables to store and measure elapsed time and define the number of conversions
-          long numberOfSamples = 30000;  //Number of conversions
+          //Các biến để lưu và đo thời gian trôi qua, và xác định số lượng phép chuyển đổi
+          long numberOfSamples = 30000;  //Số lượng phép chuyển đổi
           long finishTime = 0;
           long startTime = micros();
 
           for (long i = 0; i < numberOfSamples; i++) {
             A.readSingleContinuous();
-            //Note: here we just perform the readings and we don't print the results
+            //Lưu ý: ở đây ta chỉ thực hiện phép đọc, không in kết quả ra
           }
 
-          finishTime = micros() - startTime;  //Calculate the elapsed time
+          finishTime = micros() - startTime;  //Tính thời gian đã trôi qua
 
           A.stopConversion();
 
-          //Printing the results
+          //In kết quả
           Serial.print("Total conversion time for 30k samples: ");
           Serial.print(finishTime);
           Serial.println(" us");
@@ -510,7 +508,7 @@ void loop() {
         }
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'T':  //Testing the serial connection
+      case 'T':  //Kiểm tra kết nối serial
         Serial.println("The serial connection is OK!");
         break;
       //--------------------------------------------------------------------------------------------------------
@@ -518,32 +516,32 @@ void loop() {
         printAllRegistersStatus();
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'a':  //Testing a single conversion - Only one single result is returned
+      case 'a':  //Kiểm tra 1 phép chuyển đổi đơn lẻ - Chỉ trả về 1 kết quả duy nhất
 
-        rawConversion = A.readSingle();                    //Reading the raw value from a previously selected input, passing it to a variable
-        voltageValue = A.convertToVoltage(rawConversion);  //Converting the above conversion into a floating point number
+        rawConversion = A.readSingle();                    //Đọc giá trị thô từ đầu vào đã chọn trước đó, gán vào 1 biến
+        voltageValue = A.convertToVoltage(rawConversion);  //Chuyển đổi giá trị trên thành số thực (floating point)
 
-        //Printing the results
+        //In kết quả
         Serial.print("Single-ended conversion result: ");
-        Serial.println(voltageValue, 8);  //Print the floating point number with 8 digits.
+        Serial.println(voltageValue, 8);  //In số thực với 8 chữ số.
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'M':  //set MUX - Chon kenh dau vao. Cu phap: "Ms<so>" (don) hoac "Md<so>" (vi sai)
+      case 'M':  //set MUX - Chọn kênh đầu vào. Cú pháp: "Ms<số>" (đơn) hoặc "Md<số>" (vi sai)
         {
-          //SUA LOI (#2): dung waitForSerialInput() thay vi while(!Serial.available());
-          //de tranh treo may neu khong co du lieu tiep theo duoc gui den.
+          //SỬA LỖI (#2): dùng waitForSerialInput() thay vì while(!Serial.available());
+          //để tránh treo máy nếu không có dữ liệu tiếp theo được gửi đến.
           if (!waitForSerialInput()) break;
-          inputMode = Serial.read();  //Read the input mode
+          inputMode = Serial.read();  //Đọc chế độ đầu vào
 
           if (inputMode == 's')  //single-ended
           {
             if (!waitForSerialInput()) break;
             inputChannel = Serial.parseInt();
-            //SUA LOI (#1): kiem tra inputChannel co nam trong khoang hop le (0-7) hay khong
-            //truoc khi dung no de truy cap mang singleEndedChannels[]. Truoc day, mot gia tri
-            //ngoai khoang (vd 99) se doc/ghi ngoai vung nho cua mang, gay loi khong luong truoc.
+            //SỬA LỖI (#1): kiểm tra inputChannel có nằm trong khoảng hợp lệ (0-7) hay không
+            //trước khi dùng nó để truy cập mảng singleEndedChannels[]. Trước đây, một giá trị
+            //ngoài khoảng (vd 99) sẽ đọc/ghi ngoài vùng nhớ của mảng, gây lỗi không lường trước.
             if (inputChannel < 0 || inputChannel > 7) {
-              Serial.println("Loi: So kenh (single-ended) khong hop le. Chi chap nhan 0-7.");
+              Serial.println("Lỗi: Số kênh (single-ended) không hợp lệ. Chỉ chấp nhận 0-7.");
               break;
             }
             A.setMUX(singleEndedChannels[inputChannel]);
@@ -554,9 +552,9 @@ void loop() {
           {
             if (!waitForSerialInput()) break;
             inputChannel = Serial.parseInt();
-            //SUA LOI (#1): kiem tra inputChannel co nam trong khoang hop le (0-3) hay khong
+            //SỬA LỖI (#1): kiểm tra inputChannel có nằm trong khoảng hợp lệ (0-3) hay không
             if (inputChannel < 0 || inputChannel > 3) {
-              Serial.println("Loi: So kenh (differential) khong hop le. Chi chap nhan 0-3.");
+              Serial.println("Lỗi: Số kênh (differential) không hợp lệ. Chỉ chấp nhận 0-3.");
               break;
             }
             A.setMUX(differentialChannels[inputChannel]);
@@ -565,54 +563,54 @@ void loop() {
         }
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'P':  //Set PGA - Dat he so khuech dai. Cu phap: "P<so>" (0-6)
+      case 'P':  //Set PGA - Đặt hệ số khuếch đại. Cú pháp: "P<số>" (0-6)
         {
           if (!waitForSerialInput()) break;
           pgaSelection = Serial.parseInt();
-          //SUA LOI (#1): kiem tra pgaSelection co nam trong khoang hop le (0-6) hay khong
-          //truoc khi truy cap mang pgaValues[] (mang co 7 phan tu, chi so 0-6).
+          //SỬA LỖI (#1): kiểm tra pgaSelection có nằm trong khoảng hợp lệ (0-6) hay không
+          //trước khi truy cập mảng pgaValues[] (mảng có 7 phần tử, chỉ số 0-6).
           if (pgaSelection < 0 || pgaSelection > 6) {
-            Serial.println("Loi: Gia tri PGA khong hop le. Chi chap nhan 0-6.");
+            Serial.println("Lỗi: Giá trị PGA không hợp lệ. Chỉ chấp nhận 0-6.");
             break;
           }
           A.setPGA(pgaValues[pgaSelection]);
           //Example: P4 will select the PGA = 16
           Serial.print("PGA value: ");
-          Serial.println(A.getPGA());  //Read the PGA from the register and print it
+          Serial.println(A.getPGA());  //Đọc giá trị PGA từ thanh ghi rồi in ra
         }
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'F':  //Set sampling frequency - Dat toc do lay mau. Cu phap: "F<so>" (0-15)
+      case 'F':  //Set sampling frequency - Đặt tốc độ lấy mẫu. Cú pháp: "F<số>" (0-15)
         {
           if (!waitForSerialInput()) break;
-          drateSelection = Serial.parseInt();  //Parse the number (item number in the array) Phân tích số (số mục trong mảng)
-          //SUA LOI (#1): kiem tra drateSelection co nam trong khoang hop le (0-15) hay khong
-          //truoc khi truy cap mang drateValues[] (mang co 16 phan tu, chi so 0-15).
+          drateSelection = Serial.parseInt();  //Phân tích số (số mục trong mảng)
+          //SỬA LỖI (#1): kiểm tra drateSelection có nằm trong khoảng hợp lệ (0-15) hay không
+          //trước khi truy cập mảng drateValues[] (mảng có 16 phần tử, chỉ số 0-15).
           if (drateSelection < 0 || drateSelection > 15) {
-            Serial.println("Loi: Gia tri toc do lay mau khong hop le. Chi chap nhan 0-15.");
+            Serial.println("Lỗi: Giá trị tốc độ lấy mẫu không hợp lệ. Chỉ chấp nhận 0-15.");
             break;
           }
           delay(100);
           Serial.print("DRATE is selected as: ");
-          Serial.println(drateValues[drateSelection]);  //Print the value from the array
+          Serial.println(drateValues[drateSelection]);  //In giá trị lấy từ mảng
           delay(100);
-          A.setDRATE(drateValues[drateSelection]);  //Pass the value to the register on the ADS1256
+          A.setDRATE(drateValues[drateSelection]);  //Truyền giá trị vào thanh ghi trên ADS1256
           delay(100);
           Serial.print("DRATE is set to ");
-          Serial.println(A.readRegister(DRATE_REG));  //Read the register to see if the value was updated correctly
+          Serial.println(A.readRegister(DRATE_REG));  //Đọc lại thanh ghi để kiểm tra giá trị đã được cập nhật đúng chưa
           //Example: F3 will make the DRATE = 3750 SPS
         }
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'R':  //read register - Doc 1 thanh ghi. Cu phap: "R<so>" (0-10)
+      case 'R':  //read register - Đọc 1 thanh ghi. Cú pháp: "R<số>" (0-10)
         {
           if (!waitForSerialInput()) break;
-          registerToRead = Serial.parseInt();  //This part reads the number of the register from the serial port
-          //SUA LOI (#1): kiem tra registerToRead co nam trong khoang hop le (0-10) hay khong
-          //truoc khi truy cap mang registers[] (mang co 11 phan tu kieu String, chi so 0-10).
-          //Neu khong kiem tra, mot gia tri ngoai khoang (vd "R99") co the doc ngoai vung nho.
+          registerToRead = Serial.parseInt();  //Phần này đọc số hiệu thanh ghi từ cổng serial
+          //SỬA LỖI (#1): kiểm tra registerToRead có nằm trong khoảng hợp lệ (0-10) hay không
+          //trước khi truy cập mảng registers[] (mảng có 11 phần tử kiểu String, chỉ số 0-10).
+          //Nếu không kiểm tra, một giá trị ngoài khoảng (vd "R99") có thể đọc ngoài vùng nhớ.
           if (registerToRead < 0 || registerToRead > 10) {
-            Serial.println("Loi: So thanh ghi khong hop le. Chi chap nhan 0-10.");
+            Serial.println("Lỗi: Số thanh ghi không hợp lệ. Chỉ chấp nhận 0-10.");
             break;
           }
           Serial.print("Value of ");
@@ -624,21 +622,21 @@ void loop() {
         }
         break;
       //--------------------------------------------------------------------------------------------------------
-      case 'W':  //Write register - Ghi 1 gia tri vao 1 thanh ghi. Cu phap: "W<so_thanh_ghi> <gia_tri>"
+      case 'W':  //Write register - Ghi 1 giá trị vào 1 thanh ghi. Cú pháp: "W<số_thanh_ghi> <giá_trị>"
         {
           if (!waitForSerialInput()) break;
-          registerToWrite = Serial.parseInt();  //This part reads the number of the register from the serial port
-          //SUA LOI (#1): kiem tra registerToWrite co nam trong khoang hop le (0-10) hay khong
+          registerToWrite = Serial.parseInt();  //Phần này đọc số hiệu thanh ghi từ cổng serial
+          //SỬA LỖI (#1): kiểm tra registerToWrite có nằm trong khoảng hợp lệ (0-10) hay không
           if (registerToWrite < 0 || registerToWrite > 10) {
-            Serial.println("Loi: So thanh ghi khong hop le. Chi chap nhan 0-10.");
+            Serial.println("Lỗi: Số thanh ghi không hợp lệ. Chỉ chấp nhận 0-10.");
             break;
           }
           if (!waitForSerialInput()) break;
-          registerValueToWrite = Serial.parseInt();  //This part reads the value of the register from the serial port
-          //SUA LOI (#1): kiem tra registerValueToWrite co nam trong khoang 1 byte (0-255) hay khong,
-          //vi thanh ghi cua ADS1256 chi rong 8-bit.
+          registerValueToWrite = Serial.parseInt();  //Phần này đọc giá trị cần ghi vào thanh ghi từ cổng serial
+          //SỬA LỖI (#1): kiểm tra registerValueToWrite có nằm trong khoảng 1 byte (0-255) hay không,
+          //vì thanh ghi của ADS1256 chỉ rộng 8-bit.
           if (registerValueToWrite < 0 || registerValueToWrite > 255) {
-            Serial.println("Loi: Gia tri ghi khong hop le. Chi chap nhan 0-255.");
+            Serial.println("Lỗi: Giá trị ghi không hợp lệ. Chỉ chấp nhận 0-255.");
             break;
           }
 
