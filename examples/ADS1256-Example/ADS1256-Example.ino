@@ -18,7 +18,7 @@
 // trong từng "case" bên dưới (vd: gõ 'T' để kiểm tra kết nối, gõ 'a' để đo 1 lần,
 // gõ 'I' để kiểm tra + in giải thích trạng thái TẤT CẢ các thanh ghi hiện tại).
 // ===============================================================================================
-
+//test
 #include <ADS1256.h>
 
 //#define ADS1256_SPI_ALREADY_STARTED  
